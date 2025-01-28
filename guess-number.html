@@ -1,0 +1,21 @@
+        bubble.addEventListener('click', handleInteraction);
+        bubble.addEventListener('touchstart', handleInteraction);
+
+        container.appendChild(bubble);
+      });
+    }
+
+    function playAudio(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(utterance);
+    }
+
+    // Prevent text selection on touch or click
+    document.addEventListener('mousedown', e => e.preventDefault());
+    document.addEventListener('touchstart', e => e.preventDefault());
+
+    // Start the game
+    createBubbles();
+  </script>
+</body>
+</html>
