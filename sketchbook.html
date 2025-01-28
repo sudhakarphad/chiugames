@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sketch Book</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      cursor: crosshair;
+      touch-action: none; /* Prevents scrolling while drawing */
+    }
+    .controls {
+      margin: 10px 0;
+    }
+    .controls button, .controls select, .controls input {
+      margin-right: 10px;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sketch Book</h1>
+  <div class="controls">
+    <label for="color">Color:</label>
+    <input type="color" id="color" value="#000000">
+
+    <label for="size">Size:</label>
+    <input type="number" id="size" min="1" max="50" value="5">
+
+    <button id="eraser">Eraser</button>
+    <button id="undo">Undo</button>
+    <button id="clear">Clear All</button>
+  </div>
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('color');
+    const sizePicker = document.getElementById('size');
+    const eraserButton = document.getElementById('eraser');
+    const undoButton = document.getElementById('undo');
+    const clearButton = document.getElementById('clear');
+
+    let drawing = false;
+    let currentColor = colorPicker.value;
+    let currentSize = sizePicker.value;
+    let isEraser = false;
+    let undoStack = [];
+
+    // Store canvas state
+    function saveState() {
+      undoStack.push(canvas.toDataURL());
+    }
+
+    // Get coordinates from touch events
+    function getTouchPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    }
+
+    // Start drawing
+    canvas.addEventListener('mousedown', (e) => {
+      drawing = true;
+      saveState();
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      drawing = true;
+      saveState();
+      const pos = getTouchPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+
+    // Draw on canvas
+    canvas.addEventListener('mousemove', (e) => {
+      if (!drawing) return;
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.strokeStyle = isEraser ? '#FFFFFF' : currentColor;
+      ctx.lineWidth = currentSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!drawing) return;
+      const pos = getTouchPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = isEraser ? '#FFFFFF' : currentColor;
+      ctx.lineWidth = currentSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    });
+
+    // Stop drawing
+    canvas.addEventListener('mouseup', () => {
+      drawing = false;
+      ctx.closePath();
+    });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      drawing = false;
+      ctx.closePath();
+    });
+
+    // Change color
+    colorPicker.addEventListener('input', (e) => {
+      currentColor = e.target.value;
+      isEraser = false;
+    });
+
+    // Change brush size
+    sizePicker.addEventListener('input', (e) => {
+      currentSize = e.target.value;
+    });
+
+    // Enable eraser
+    eraserButton.addEventListener('click', () => {
+      isEraser = true;
+    });
+
+    // Undo last action
+    undoButton.addEventListener('click', () => {
+      if (undoStack.length > 0) {
+        const lastState = undoStack.pop();
+        const img = new Image();
+        img.src = lastState;
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+      }
+    });
+
+    // Clear canvas
+    clearButton.addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      undoStack = []; // Clear undo stack
+    });
+  </script>
+</body>
+</html>
